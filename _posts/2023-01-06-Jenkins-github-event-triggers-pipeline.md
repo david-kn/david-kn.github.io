@@ -3,9 +3,11 @@ title: "Jenkins: GitHub event on a shared library triggers a job build"
 date: 2023-01-03
 ---
 
-**Situation:** A jenkins job gets triggered by a git push event to a jenkins shared library but not a Jenkins job (pipeline) code itself. This behaviour might not be desirable when a job should be triggered only by a git event strictly related and attached to a codebase repo itself (when a setting `Git SCM polling` is enabled). Not any other _generic_ code like shared library defined globally for a whole Jenkins etc.
+**Issue / Situation:** A jenkins job gets triggered by a git push event to a jenkins shared library but not a Jenkins job (pipeline) code itself. This behaviour might not be desirable when a job should be triggered only by a git event strictly related and attached to a codebase repo itself (when a setting `Git SCM polling` is enabled). Not any other _generic_ code like shared library defined globally for a whole Jenkins etc.
 
-_Note:_ based on a Jenkins commmunity, such a behaviour is actually in accordance to its design. Any change within any of the code related to the job should be taken into account when working with git scm polling for changes and having git hooks set. This behaviour is also well logged within each impacted job - in section `menu link` where it is transparent which event and changed caused a job trigger.
+_Note:_ based on a Jenkins commmunity, such a behaviour is actually in accordance to its design. Any change within any of the code related to the job (let call it a _code dependency chain_) should be taken into account when working with git scm polling for changes and having git hooks set. This behaviour is also well logged within each impacted job - in section `menu link` where it is transparent which event and changed caused a job trigger.
+
+**Desired state**: Git polling should monitor and job get triggered only when a git push is related directly to the job repository.
 
 **Solution:** 
 A) Disable globally within Jenkins configuration an option for such shared library `Include @Library changes in job recent changes` (within Jenkins -> Manage Jenkins -> under specific jenkins shared library section)
