@@ -3,11 +3,11 @@ title: "Jenkins: Conditional scheduled CRON trigger based on branch"
 date: 2023-01-05
 ---
 
-**Situation:** Multibranch or just a single pipeline branch jenkins job should be in some specific situations set with a `cron` or even a `parametrizedcron` settings but left with no schedules in other case.
-To give a very specific and real example: when on a production `main` (or `master`) branch, the scheduled CRON should be active but not on any other (PR, dev, feature etc.) branches
+**Situation / Desired state:** Multibranch or just a pipeline jenkins job should be in some specific situations (under certain conditions) scheduled with a `cron` or even a `parametrizedCron` settings but left with no schedules in all other cases (for all other branches).
+To give a very specific and real example: when on a production `main` (or `master`) branch, the scheduled CRON should be active for a pipeline job. But no scheduling should be applied for any other (PR, dev, feature etc.) branch builds.
 
-**Solution:** This kind of syntax is not natively supported at this time by Jenkins `triggers { ... }` or `cron {}` statements but can be achieved with a quite simple check and variable initialization within Jenkinsfile.
-Important part is with the `CRON_STRING` variable initialization and use. Other simple parts are added just to describe
+**Solution:** This kind of condition syntax is not natively supported at this time by Jenkins `triggers { ... }` or `cron {}` statements but can be achieved with a quite simple piece of code within Jenkinsfile.
+An important part in the following example is the `CRON_STRING` variable initialization and use. Other simple parts are added just to make Jenkinsfile feel more real:
 
 ```
 String CRON_STRING = (scm.branches[0].name == "main") ? 'H */5 * * *' : ''
@@ -29,7 +29,7 @@ pipeline {
 }
 ```
 
-or a very similar example with a `parametrizedCron` that allows mulptiple different Cron configs with different parameters for a production branch (but not any other).
+Or a very similar example with a `parametrizedCron` that allows mulptiple different cron configs with different parameters for a production branch (but not any other).
 
 ```
 String CRON_STRING = (scm.branches[0].name == 'master' || scm.branches[0].name == 'main') ? '''
@@ -50,3 +50,5 @@ pipeline {
   }
 }
 ```
+
+__Note: The condition itself can be of course more complex but for a clarity of this example as well as real-life application (scheduling only pipeline using the production branch), a ternary conditional operator is used._
