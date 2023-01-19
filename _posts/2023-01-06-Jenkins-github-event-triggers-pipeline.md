@@ -17,5 +17,6 @@ B) If such an option is not possible due to any other reasoning it is possible t
 Library("my-shared-library", changelog=false) _
 ```
 
-Jenkins issue tracker: https://issues.jenkins.io/browse/JENKINS-47756 and https://issues.jenkins.io/browse/JENKINS-39615 
-Solution found also here: https://devops.stackexchange.com/a/13167
+Further references:
+ - Jenkins issue tracker: [https://issues.jenkins.io/browse/JENKINS-47756](https://issues.jenkins.io/browse/JENKINS-47756) and [https://issues.jenkins.io/browse/JENKINS-39615](https://issues.jenkins.io/browse/JENKINS-39615 )
+ - solution found also here: [https://devops.stackexchange.com/a/13167](https://devops.stackexchange.com/a/13167)

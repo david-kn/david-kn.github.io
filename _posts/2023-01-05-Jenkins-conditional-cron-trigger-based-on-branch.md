@@ -51,4 +51,4 @@ pipeline {
 }
 ```
 
-__Note: The condition itself can be of course more complex but for a clarity of this example as well as real-life application (scheduling only pipeline using the production branch), a ternary conditional operator is used._
+_Note: The condition itself can be of course more complex but for a clarity of this example as well as real-life application (scheduling only pipeline using the production branch), a ternary conditional operator is used._
