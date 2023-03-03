@@ -20,3 +20,4 @@ Library("my-shared-library", changelog=false) _
 Further references:
  - Jenkins issue tracker: [https://issues.jenkins.io/browse/JENKINS-47756](https://issues.jenkins.io/browse/JENKINS-47756) and [https://issues.jenkins.io/browse/JENKINS-39615](https://issues.jenkins.io/browse/JENKINS-39615 )
  - solution found also here: [https://devops.stackexchange.com/a/13167](https://devops.stackexchange.com/a/13167)
+    

@@ -1,0 +1,47 @@
+<p><strong>Description / Desired state:</strong> Multibranch or just a pipeline jenkins job should be under certain condition(s) scheduled with a <code class="language-plaintext highlighter-rouge">cron</code> or even a <code class="language-plaintext highlighter-rouge">parametrizedCron</code> settings but left with no schedules in all other cases (for all other branches).
+To give a very specific example: when on a production <code class="language-plaintext highlighter-rouge">main</code> (or <code class="language-plaintext highlighter-rouge">master</code>) branch, the scheduled CRON should be active for a pipeline job. But no scheduling should be applied for any other (PR, dev, feature etc.) branch builds.</p>
+
+<p><strong>Solution:</strong> This kind of condition syntax is not natively supported at this time by Jenkins <code class="language-plaintext highlighter-rouge">triggers { ... }</code> or <code class="language-plaintext highlighter-rouge">cron {}</code> statements but can be achieved with a quite simple piece of code within Jenkinsfile.
+An important part in the following example is the <code class="language-plaintext highlighter-rouge">CRON_STRING</code> variable initialization and use. Other simple parts are added just to make Jenkinsfile feel more real:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>String CRON_STRING = (scm.branches[0].name == "main") ? 'H */5 * * *' : ''
+
+pipeline {  
+  agent any
+  triggers {
+      cron(CRON_STRING)
+  }
+  
+  // whatever other code, options, stages etc. is in your pipeline ...
+  stages {
+    stage("Test") {
+      steps {
+        echo "test"
+      }
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>Or a very similar example with a <code class="language-plaintext highlighter-rouge">parametrizedCron</code> that allows multiple different cron configs with different parameters for a production branch (but not any other).</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>String CRON_STRING = (scm.branches[0].name == 'master' || scm.branches[0].name == 'main') ? '''
+            0 7 * * 1-5 %SYNCHRONIZE_ALL=true;OPERATION_TYPE=UPDATE
+            0 9 * * 1   %SYNCHRONIZE_ALL=true;OPERATION_TYPE=CREATE''': ''
+pipeline {  
+  agent any
+  triggers {
+      parameterizedCron(CRON_STRING)
+  }
+
+  stages {
+    stage("Test") {
+      steps {
+        echo "test"
+      }
+    }
+  }
+}
+</code></pre></div></div>
+
+<p><em>Note: The condition itself can be of course more complex but for a clarity of this example as well as real-life application (scheduling only pipeline using the production branch), a ternary conditional operator is used.</em></p>

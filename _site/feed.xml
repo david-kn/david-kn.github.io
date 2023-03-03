@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="http://0.0.0.0:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://0.0.0.0:4000/" rel="alternate" type="text/html" /><updated>2023-02-14T17:06:00-06:00</updated><id>http://0.0.0.0:4000/feed.xml</id><title type="html">Blog about DevOps and engineering</title><subtitle></subtitle><entry><title type="html">Jenkins: Conditional scheduled CRON trigger based on branch</title><link href="http://0.0.0.0:4000/2023/01/05/Jenkins-conditional-cron-trigger-based-on-branch.html" rel="alternate" type="text/html" title="Jenkins: Conditional scheduled CRON trigger based on branch" /><published>2023-01-05T00:00:00-06:00</published><updated>2023-01-05T00:00:00-06:00</updated><id>http://0.0.0.0:4000/2023/01/05/Jenkins-conditional-cron-trigger-based-on-branch</id><content type="html" xml:base="http://0.0.0.0:4000/2023/01/05/Jenkins-conditional-cron-trigger-based-on-branch.html"><![CDATA[<p><strong>Description / Desired state:</strong> Multibranch or just a pipeline jenkins job should be under certain condition(s) scheduled with a <code class="language-plaintext highlighter-rouge">cron</code> or even a <code class="language-plaintext highlighter-rouge">parametrizedCron</code> settings but left with no schedules in all other cases (for all other branches).
+To give a very specific example: when on a production <code class="language-plaintext highlighter-rouge">main</code> (or <code class="language-plaintext highlighter-rouge">master</code>) branch, the scheduled CRON should be active for a pipeline job. But no scheduling should be applied for any other (PR, dev, feature etc.) branch builds.</p>
+
+<p><strong>Solution:</strong> This kind of condition syntax is not natively supported at this time by Jenkins <code class="language-plaintext highlighter-rouge">triggers { ... }</code> or <code class="language-plaintext highlighter-rouge">cron {}</code> statements but can be achieved with a quite simple piece of code within Jenkinsfile.
+An important part in the following example is the <code class="language-plaintext highlighter-rouge">CRON_STRING</code> variable initialization and use. Other simple parts are added just to make Jenkinsfile feel more real:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>String CRON_STRING = (scm.branches[0].name == "main") ? 'H */5 * * *' : ''
+
+pipeline {  
+  agent any
+  triggers {
+      cron(CRON_STRING)
+  }
+  
+  // whatever other code, options, stages etc. is in your pipeline ...
+  stages {
+    stage("Test") {
+      steps {
+        echo "test"
+      }
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>Or a very similar example with a <code class="language-plaintext highlighter-rouge">parametrizedCron</code> that allows multiple different cron configs with different parameters for a production branch (but not any other).</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>String CRON_STRING = (scm.branches[0].name == 'master' || scm.branches[0].name == 'main') ? '''
+            0 7 * * 1-5 %SYNCHRONIZE_ALL=true;OPERATION_TYPE=UPDATE
+            0 9 * * 1   %SYNCHRONIZE_ALL=true;OPERATION_TYPE=CREATE''': ''
+pipeline {  
+  agent any
+  triggers {
+      parameterizedCron(CRON_STRING)
+  }
+
+  stages {
+    stage("Test") {
+      steps {
+        echo "test"
+      }
+    }
+  }
+}
+</code></pre></div></div>
+
+<p><em>Note: The condition itself can be of course more complex but for a clarity of this example as well as real-life application (scheduling only pipeline using the production branch), a ternary conditional operator is used.</em></p>]]></content><author><name></name></author><summary type="html"><![CDATA[Description / Desired state: Multibranch or just a pipeline jenkins job should be under certain condition(s) scheduled with a cron or even a parametrizedCron settings but left with no schedules in all other cases (for all other branches). To give a very specific example: when on a production main (or master) branch, the scheduled CRON should be active for a pipeline job. But no scheduling should be applied for any other (PR, dev, feature etc.) branch builds.]]></summary></entry><entry><title type="html">Jenkins: GitHub event on a shared library triggers a job build</title><link href="http://0.0.0.0:4000/2023/01/03/Jenkins-github-event-triggers-pipeline.html" rel="alternate" type="text/html" title="Jenkins: GitHub event on a shared library triggers a job build" /><published>2023-01-03T00:00:00-06:00</published><updated>2023-01-03T00:00:00-06:00</updated><id>http://0.0.0.0:4000/2023/01/03/Jenkins-github-event-triggers-pipeline</id><content type="html" xml:base="http://0.0.0.0:4000/2023/01/03/Jenkins-github-event-triggers-pipeline.html"><![CDATA[<p><strong>Issue description:</strong> A Jenkins job gets triggered by a git push (event) to a Jenkins shared library but not a Jenkins job (pipeline) code itself. This behaviour might not be desirable when a job should be triggered only by a git push event strictly related and attached to a specific repo itself (when a setting <code class="language-plaintext highlighter-rouge">Git SCM polling</code> is enabled). Not any other <em>generic</em> code like shared library defined globally for a whole Jenkins etc.</p>
+
+<p><em>Note:</em> based on a Jenkins community, such a behaviour is actually in accordance to its design. Any change within any of the code related to the job (let’s call it a <em>code dependency chain</em>) should be taken into account when working with <code class="language-plaintext highlighter-rouge">git scm polling</code> for changes and having git hooks set. This behaviour is also well logged within each impacted job - in section <code class="language-plaintext highlighter-rouge">GitHub Hook log</code> where it is transparent which event and/or change caused a job trigger.</p>
+
+<p><strong>Desired state</strong>: Git polling should monitor, and job get built only when a git push is related directly to the job repository.</p>
+
+<p><strong>Solution:</strong> 
+A) Disable globally within Jenkins configuration an option for such shared library <code class="language-plaintext highlighter-rouge">Include @Library changes in job recent changes</code> (within Jenkins -&gt; Manage Jenkins -&gt; under specific Jenkins shared library section)
+B) If such an option is not possible due to any other reasoning it is possible to disable such a behaviour <em>ad hoc</em> and explicitly for individual pipelines by <code class="language-plaintext highlighter-rouge">changelog=false</code> parameter  within pipeline include statement, e.g.:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Library("my-shared-library", changelog=false) _
+</code></pre></div></div>
+
+<p>Further references:</p>
+<ul>
+  <li>Jenkins issue tracker: <a href="https://issues.jenkins.io/browse/JENKINS-47756">https://issues.jenkins.io/browse/JENKINS-47756</a> and <a href="https://issues.jenkins.io/browse/JENKINS-39615">https://issues.jenkins.io/browse/JENKINS-39615</a></li>
+  <li>solution found also here: <a href="https://devops.stackexchange.com/a/13167">https://devops.stackexchange.com/a/13167</a></li>
+</ul>]]></content><author><name></name></author><summary type="html"><![CDATA[Issue description: A Jenkins job gets triggered by a git push (event) to a Jenkins shared library but not a Jenkins job (pipeline) code itself. This behaviour might not be desirable when a job should be triggered only by a git push event strictly related and attached to a specific repo itself (when a setting Git SCM polling is enabled). Not any other generic code like shared library defined globally for a whole Jenkins etc. Note: based on a Jenkins community, such a behaviour is actually in accordance to its design. Any change within any of the code related to the job (let’s call it a code dependency chain) should be taken into account when working with git scm polling for changes and having git hooks set. This behaviour is also well logged within each impacted job - in section GitHub Hook log where it is transparent which event and/or change caused a job trigger. Desired state: Git polling should monitor, and job get built only when a git push is related directly to the job repository. Solution: A) Disable globally within Jenkins configuration an option for such shared library Include @Library changes in job recent changes (within Jenkins -&gt; Manage Jenkins -&gt; under specific Jenkins shared library section) B) If such an option is not possible due to any other reasoning it is possible to disable such a behaviour ad hoc and explicitly for individual pipelines by changelog=false parameter within pipeline include statement, e.g.: Library("my-shared-library", changelog=false) _ Further references: Jenkins issue tracker: https://issues.jenkins.io/browse/JENKINS-47756 and https://issues.jenkins.io/browse/JENKINS-39615 solution found also here: https://devops.stackexchange.com/a/13167]]></summary></entry></feed>

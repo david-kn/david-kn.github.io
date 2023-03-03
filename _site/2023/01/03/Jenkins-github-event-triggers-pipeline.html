@@ -1,0 +1,18 @@
+<p><strong>Issue description:</strong> A Jenkins job gets triggered by a git push (event) to a Jenkins shared library but not a Jenkins job (pipeline) code itself. This behaviour might not be desirable when a job should be triggered only by a git push event strictly related and attached to a specific repo itself (when a setting <code class="language-plaintext highlighter-rouge">Git SCM polling</code> is enabled). Not any other <em>generic</em> code like shared library defined globally for a whole Jenkins etc.</p>
+
+<p><em>Note:</em> based on a Jenkins community, such a behaviour is actually in accordance to its design. Any change within any of the code related to the job (let’s call it a <em>code dependency chain</em>) should be taken into account when working with <code class="language-plaintext highlighter-rouge">git scm polling</code> for changes and having git hooks set. This behaviour is also well logged within each impacted job - in section <code class="language-plaintext highlighter-rouge">GitHub Hook log</code> where it is transparent which event and/or change caused a job trigger.</p>
+
+<p><strong>Desired state</strong>: Git polling should monitor, and job get built only when a git push is related directly to the job repository.</p>
+
+<p><strong>Solution:</strong> 
+A) Disable globally within Jenkins configuration an option for such shared library <code class="language-plaintext highlighter-rouge">Include @Library changes in job recent changes</code> (within Jenkins -&gt; Manage Jenkins -&gt; under specific Jenkins shared library section)
+B) If such an option is not possible due to any other reasoning it is possible to disable such a behaviour <em>ad hoc</em> and explicitly for individual pipelines by <code class="language-plaintext highlighter-rouge">changelog=false</code> parameter  within pipeline include statement, e.g.:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Library("my-shared-library", changelog=false) _
+</code></pre></div></div>
+
+<p>Further references:</p>
+<ul>
+  <li>Jenkins issue tracker: <a href="https://issues.jenkins.io/browse/JENKINS-47756">https://issues.jenkins.io/browse/JENKINS-47756</a> and <a href="https://issues.jenkins.io/browse/JENKINS-39615">https://issues.jenkins.io/browse/JENKINS-39615</a></li>
+  <li>solution found also here: <a href="https://devops.stackexchange.com/a/13167">https://devops.stackexchange.com/a/13167</a></li>
+</ul>
