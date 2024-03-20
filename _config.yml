@@ -1,6 +1,5 @@
 ---
 title: Blog about DevOps and engineering
 theme: minima
-  skin: dark
 show_excerpts: true
 ignore_theme_config: true
