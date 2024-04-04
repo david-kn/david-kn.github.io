@@ -1,0 +1,37 @@
+title: "Blog about DevOps and engineering"
+# author: "David Konar"
+# description: """
+
+#email: ""
+#twitter_username: ""
+github_username: "david-kn"
+#linkedin_username: ""
+
+#########################################################################################
+######### Nothing below needs to be changed (unless you know what you're doing) #########
+#########################################################################################
+theme: "minima"
+
+header_pages:
+  - archive.md
+
+show_excerpts: false
+
+kramdown:
+  syntax_highlighter_opts:
+    disable: true
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+titles_from_headings:
+  strip_title: true
+  collections: true
+
+defaults:
+  - scope:
+      path: ""
+      type: post
+    values:
+      tags: Other
