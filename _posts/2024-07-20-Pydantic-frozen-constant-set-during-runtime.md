@@ -17,34 +17,14 @@ The challenge is preventing modification of these critical fields while still al
 
 ## Basic Setup
 
-The following imports and types are used throughout the examples:
+The following imports are used throughout the examples:
 
 ```python
-from enum import Enum
 from typing import Optional, ClassVar, Annotated
-from pydantic import BaseModel, Field, ConfigDict
-
-class AppType(str, Enum):
-    APP_GROUP = "APP_GROUP"
-    APP = "APP"
+from pydantic import BaseModel, Field
 ```
 
-## Solution 1: Using ClassVar for Known Constants
-
-When you know the constant value from the beginning, use `ClassVar` to define it as a class-level constant:
-
-```python
-class ClientType(BaseModel):
-    attribute: Optional[str] = None
-    object_type: ClassVar[str] = "CLIENT_TYPE"
-```
-
-Attempting to modify this value raises an `AttributeError`:
-```
-AttributeError: 'object_type' is a ClassVar of 'ClientType' and cannot be set on an instance.
-```
-
-## Solution 2: Using Frozen Fields
+## Solution 1: Using Frozen Fields
 
 For fields that should become immutable after being set, use `Field` with `frozen=True`. This works with default values:
 
@@ -85,11 +65,26 @@ object_type
     For further information visit https://errors.pydantic.dev/2.8/v/frozen_field
 ```
 
+## Solution 2: Using ClassVar for Known Constants
+
+When you know the constant value from the beginning, use `ClassVar` to define it as a class-level constant. Note that `ClassVar` fields are **not** Pydantic fields — they are excluded from validation, schema generation, and `model_dump()` output. Use this approach only when you don't need the constant to appear in serialized model data.
+
+```python
+class ClientType(BaseModel):
+    attribute: Optional[str] = None
+    object_type: ClassVar[str] = "CLIENT_TYPE"
+```
+
+Attempting to modify this value raises an `AttributeError`:
+```
+AttributeError: 'object_type' is a ClassVar of 'ClientType' and cannot be set on an instance.
+```
+
 `ClassVar` raises an `AttributeError` on any instance assignment attempt, while `frozen=True` raises a `ValidationError`. Neither requires `validate_assignment=True` to enforce immutability — that setting controls whether *validators* run on assignment, which is a separate concern.
 
 ## Solution 3: Value Not Known at Initialization
 
-If the value is not known at initialization time, Pydantic v2 does not offer a built-in way to freeze a field after its first assignment. You need to implement this yourself. One simple approach:
+If the value is not known at initialization time, Pydantic v2 does not offer a built-in way to freeze a field after its first assignment. You need to implement this yourself. One simple approach — freeze the field after its first non-`None` assignment (treating `None` as "not yet set"):
 
 ```python
 class Policy(BaseModel):
@@ -115,5 +110,7 @@ If you try to change the attribute again, you get the expected error:
 ```
 AttributeError: Field 'object_type' cannot be modified after being set
 ```
+
+Note that this custom `__setattr__` does not run Pydantic validators on assignment — if you also need type checking on the first set, combine this with `model_config = ConfigDict(validate_assignment=True)` (adding `ConfigDict` to your imports).
 
 Depending on your requirements, you may need a more sophisticated approach — for example, a reusable Python [descriptor](https://docs.python.org/3/howto/descriptor.html) or the `attrs` library's `on_setattr` hooks. This is meant as a starting point.
